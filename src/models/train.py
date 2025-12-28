@@ -11,9 +11,9 @@ from mlflow.models import infer_signature
 
 # --- PATH LOGIC (Environment Aware) ---
 # This ensures we never use 'C:' on a Linux GitHub Runner
-if os.getenv('GITHUB_WORKSPACE'):
+if os.getenv("GITHUB_WORKSPACE"):
     # Running on GitHub Actions (Linux)
-    BASE_DIR = Path(os.getenv('GITHUB_WORKSPACE'))
+    BASE_DIR = Path(os.getenv("GITHUB_WORKSPACE"))
 else:
     # Running locally (Windows/Mac)
     BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -31,6 +31,7 @@ tracking_uri = MLRUNS_DIR.resolve().as_uri()
 
 mlflow.set_tracking_uri(tracking_uri)
 
+
 def load_data():
     if not DATA_PATH.exists():
         raise FileNotFoundError(f"Data not found at {DATA_PATH}. Check your pathing.")
@@ -38,6 +39,7 @@ def load_data():
     X = df.drop("target", axis=1)
     y = df["target"]
     return X, y
+
 
 def train_and_evaluate(model, X, y):
     """
@@ -51,17 +53,18 @@ def train_and_evaluate(model, X, y):
         "recall": "recall",
         "roc_auc": "roc_auc",
     }
-    
+
     results = cross_validate(
         model, X, y, cv=cv, scoring=scoring, return_train_score=False
     )
-    
+
     return {metric: np.mean(results[f"test_{metric}"]) for metric in scoring.keys()}
 
+
 def main():
-    print(f"Starting MLflow training session...")
+    print("Starting MLflow training session...")
     print(f"Tracking URI: {mlflow.get_tracking_uri()}")
-    
+
     X, y = load_data()
 
     models = {
@@ -75,7 +78,7 @@ def main():
         with mlflow.start_run(run_name=name):
             # Fit model on the full set to create the final artifact
             model.fit(X, y)
-            
+
             # Log hyperparameters
             mlflow.log_param("model_type", name)
             if name == "RandomForest":
@@ -89,15 +92,16 @@ def main():
             # Log Model Artifact with Signature (Task 4: Packaging)
             # Signature allows the API to know exactly what input columns to expect
             signature = infer_signature(X, model.predict(X))
-            
+
             mlflow.sklearn.log_model(
                 sk_model=model,
                 artifact_path="model",
                 signature=signature,
-                input_example=X.iloc[:3]
+                input_example=X.iloc[:3],
             )
 
             print(f"Successfully logged {name} to MLflow.")
+
 
 if __name__ == "__main__":
     main()

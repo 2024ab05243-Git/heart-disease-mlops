@@ -1,5 +1,4 @@
 import joblib
-import pandas as pd
 from pathlib import Path
 from sklearn.ensemble import RandomForestClassifier
 
@@ -16,10 +15,7 @@ def train_and_save():
     X = processed_df.drop("target", axis=1)
     y = processed_df["target"]
 
-    model = RandomForestClassifier(
-        n_estimators=200,
-        random_state=42
-    )
+    model = RandomForestClassifier(n_estimators=200, random_state=42)
 
     model.fit(X, y)
 
