@@ -25,6 +25,9 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
 
+      - name: Linting for Static Code Checks
+        run: flake8 src tests
+
       - name: Run unit tests
         run: pytest
 
@@ -32,3 +35,9 @@ jobs:
         env:
           MLFLOW_TRACKING_URI: file:${{ github.workspace }}/mlruns
         run: python src/models/train.py
+
+      - name: Upload MLflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlflow-artifacts
+          path: mlruns/

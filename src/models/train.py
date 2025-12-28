@@ -26,7 +26,9 @@ MLRUNS_DIR.mkdir(parents=True, exist_ok=True)
 
 # Set Tracking URI using proper file scheme
 # .as_posix() converts Windows \ to Linux /
-tracking_uri = f"file://{MLRUNS_DIR.as_posix()}"
+# tracking_uri = f"file://{MLRUNS_DIR.as_posix()}"
+tracking_uri = MLRUNS_DIR.resolve().as_uri()
+
 mlflow.set_tracking_uri(tracking_uri)
 
 def load_data():
