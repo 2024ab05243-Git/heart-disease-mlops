@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/Admin/heart-disease-mlops/mlruns/0/190bcb5edb334f31b9c898f62a3d436c/artifacts
+end_time: 1766921413548
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 190bcb5edb334f31b9c898f62a3d436c
+run_name: RandomForest
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1766921401835
+status: 3
+tags: []
+user_id: Admin
