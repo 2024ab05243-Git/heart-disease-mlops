@@ -2,56 +2,64 @@ import os
 import mlflow
 import mlflow.sklearn
 import pandas as pd
+import numpy as np
 from pathlib import Path
 from sklearn.model_selection import StratifiedKFold, cross_validate
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from mlflow.models import infer_signature
 
-# FIX: Dynamically define absolute paths relative to the project root
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-MLRUNS_DIR = BASE_DIR / "mlruns"
-PROCESSED_DATA_PATH = BASE_DIR / "data" / "processed" / "heart_disease_processed.csv"
+# --- PATH LOGIC (Environment Aware) ---
+# This ensures we never use 'C:' on a Linux GitHub Runner
+if os.getenv('GITHUB_WORKSPACE'):
+    # Running on GitHub Actions (Linux)
+    BASE_DIR = Path(os.getenv('GITHUB_WORKSPACE'))
+else:
+    # Running locally (Windows/Mac)
+    BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-# Ensure the mlruns directory exists
+MLRUNS_DIR = BASE_DIR / "mlruns"
+DATA_PATH = BASE_DIR / "data" / "processed" / "heart_disease_processed.csv"
+
+# Ensure directories exist
 MLRUNS_DIR.mkdir(parents=True, exist_ok=True)
 
-# Set tracking URI using an absolute path (file://...)
-mlflow.set_tracking_uri(f"file://{MLRUNS_DIR.as_posix()}")
+# Set Tracking URI using proper file scheme
+# .as_posix() converts Windows \ to Linux /
+tracking_uri = f"file://{MLRUNS_DIR.as_posix()}"
+mlflow.set_tracking_uri(tracking_uri)
 
 def load_data():
-    if not PROCESSED_DATA_PATH.exists():
-        raise FileNotFoundError(f"Processed data not found at {PROCESSED_DATA_PATH}. Run EDA/preprocessing first.")
-    df = pd.read_csv(PROCESSED_DATA_PATH)
+    if not DATA_PATH.exists():
+        raise FileNotFoundError(f"Data not found at {DATA_PATH}. Check your pathing.")
+    df = pd.read_csv(DATA_PATH)
     X = df.drop("target", axis=1)
     y = df["target"]
     return X, y
 
 def train_and_evaluate(model, X, y):
+    """
+    Core logic for Task 2: Model Development
+    Uses 5-fold Stratified Cross-Validation
+    """
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-
     scoring = {
         "accuracy": "accuracy",
         "precision": "precision",
         "recall": "recall",
         "roc_auc": "roc_auc",
     }
-
+    
     results = cross_validate(
-        model,
-        X,
-        y,
-        cv=cv,
-        scoring=scoring,
-        return_train_score=False,
+        model, X, y, cv=cv, scoring=scoring, return_train_score=False
     )
-
-    return {
-        metric: results[f"test_{metric}"].mean()
-        for metric in scoring.keys()
-    }
+    
+    return {metric: np.mean(results[f"test_{metric}"]) for metric in scoring.keys()}
 
 def main():
+    print(f"Starting MLflow training session...")
+    print(f"Tracking URI: {mlflow.get_tracking_uri()}")
+    
     X, y = load_data()
 
     models = {
@@ -60,31 +68,33 @@ def main():
     }
 
     for name, model in models.items():
-        # Start MLflow run 
+        # Start MLflow run (Task 3: Experiment Tracking)
         with mlflow.start_run(run_name=name):
-            # Fit model on full data for logging
-            model.fit(X, y) 
+            # Fit model on the full set to create the final artifact
+            model.fit(X, y)
             
-            # Log parameters 
+            # Log hyperparameters
             mlflow.log_param("model_type", name)
-            
-            # Evaluate using cross-validation [cite: 20]
+            if name == "RandomForest":
+                mlflow.log_param("n_estimators", 200)
+
+            # Log metrics (Task 3)
             metrics = train_and_evaluate(model, X, y)
             for metric, value in metrics.items():
                 mlflow.log_metric(metric, value)
 
-            # Task 4: Log model with signature for reproducibility [cite: 29, 30]
+            # Log Model Artifact with Signature (Task 4: Packaging)
+            # Signature allows the API to know exactly what input columns to expect
             signature = infer_signature(X, model.predict(X))
+            
             mlflow.sklearn.log_model(
-                sk_model=model, 
+                sk_model=model,
                 artifact_path="model",
                 signature=signature,
                 input_example=X.iloc[:3]
             )
 
-            print(f"\n{name} Performance logged to MLflow.")
-            for metric, value in metrics.items():
-                print(f"{metric}: {value:.4f}")
+            print(f"Successfully logged {name} to MLflow.")
 
 if __name__ == "__main__":
     main()
