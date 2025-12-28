@@ -1,3 +1,8 @@
+import os
+
+os.environ["MLFLOW_TRACKING_URI"] = "file:./mlruns"
+os.environ["MLFLOW_ARTIFACT_URI"] = "file:./mlruns"
+
 import mlflow
 import mlflow.sklearn
 import pandas as pd
@@ -5,9 +10,6 @@ from pathlib import Path
 from sklearn.model_selection import StratifiedKFold, cross_validate
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
-import os
-os.environ["MLFLOW_TRACKING_URI"] = "file:./mlruns"
-
 
 PROCESSED_DATA_PATH = Path("data/processed/heart_disease_processed.csv")
 
