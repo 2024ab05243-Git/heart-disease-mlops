@@ -69,6 +69,7 @@ def main():
 
     for name, model in models.items():
         # Start MLflow run (Task 3: Experiment Tracking)
+        mlflow.set_experiment("heart-disease-ci")
         with mlflow.start_run(run_name=name):
             # Fit model on the full set to create the final artifact
             model.fit(X, y)
