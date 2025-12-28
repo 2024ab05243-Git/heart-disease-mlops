@@ -29,4 +29,6 @@ jobs:
         run: pytest
 
       - name: Run model training
+        env:
+          MLFLOW_TRACKING_URI: file:${{ github.workspace }}/mlruns
         run: python src/models/train.py
