@@ -9,3 +9,5 @@ pytest
 mlflow
 flake8
 black
+fastapi
+uvicorn
