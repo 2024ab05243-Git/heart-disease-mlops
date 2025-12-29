@@ -38,6 +38,7 @@ REQUEST_COUNT = Counter(
     ["method", "endpoint"],
 )
 
+
 # -------------------------------------------------------------------
 # Middleware: logging + metrics
 # -------------------------------------------------------------------
@@ -58,6 +59,7 @@ async def logging_and_metrics(request: Request, call_next):
     )
     return response
 
+
 # -------------------------------------------------------------------
 # Input schema
 # -------------------------------------------------------------------
@@ -76,6 +78,7 @@ class PatientInput(BaseModel):
     ca: float
     thal: float
 
+
 # -------------------------------------------------------------------
 # Prediction endpoint
 # -------------------------------------------------------------------
@@ -87,14 +90,13 @@ def predict(data: PatientInput):
     prediction = int(model.predict(X_processed)[0])
     confidence = float(max(model.predict_proba(X_processed)[0]))
 
-    logging.info(
-        f"Prediction made: prediction={prediction}, confidence={confidence}"
-    )
+    logging.info(f"Prediction made: prediction={prediction}, confidence={confidence}")
 
     return {
         "prediction": prediction,
         "confidence": confidence,
     }
+
 
 # -------------------------------------------------------------------
 # Metrics endpoint
